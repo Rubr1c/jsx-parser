@@ -12,29 +12,29 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x, 18.x]      # test on multiple Node.js versions :contentReference[oaicite:18]{index=18}
+        node-version: [16.x, 18.x]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3        # get code :contentReference[oaicite:19]{index=19}
+        uses: actions/checkout@v3
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4     # set up Node.js :contentReference[oaicite:20]{index=20}
+        uses: actions/setup-node@v4 
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'                   # cache node_modules :contentReference[oaicite:21]{index=21}
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci                      # clean-install dev-deps only :contentReference[oaicite:22]{index=22}
+        run: npm ci
 
       - name: Build library
-        run: npm run build               # runs Rollup per package.json script :contentReference[oaicite:23]{index=23}
+        run: npm run build
 
       - name: Run tests
-        run: npm test                    # runs Jest tests with coverage :contentReference[oaicite:24]{index=24}
+        run: npm test
 
       - name: Upload coverage report
         if: success()
-        uses: codecov/codecov-action@v3   # optional: upload to Codecov :contentReference[oaicite:25]{index=25}
+        uses: codecov/codecov-action@v3
         with:
           files: coverage/**/coverage-final.json
