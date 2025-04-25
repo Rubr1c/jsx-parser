@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+
+# Test coverage reports
+coverage/                                  # Jest coverage output :contentReference[oaicite:4]{index=4}
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Editor directories and files
+.vscode/
+.idea/
