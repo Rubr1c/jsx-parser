@@ -1,10 +1,13 @@
 export enum TokenType {
   JSXTagStart = 'JSXTagStart',
   JSXTagEnd = 'JSXTagEnd',
-  JSXTagSelfClose = 'JSXTagSelfClose',
+  EOF = 'EOF',
 }
 
 export interface Token {
   type: TokenType;
   value: string | null;
+  row: number;
+  start: number;
+  end: number;
 }

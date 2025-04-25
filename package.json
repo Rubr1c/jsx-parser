@@ -2,9 +2,10 @@
   "name": "jsx-parser",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "build": "rimraf dist && rollup -c",
-    "demo": "ts-node scripts/demo.ts",
+    "demo": "node --loader ts-node/esm scripts/demo.ts",
     "test": "jest --coverage"
   },
   "keywords": [],
@@ -16,10 +17,12 @@
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.2",
     "jest": "^29.7.0",
     "rollup": "^4.40.0",
     "rollup-plugin-typescript2": "^0.36.0",
     "ts-jest": "^29.3.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }
 }
