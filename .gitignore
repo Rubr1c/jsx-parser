@@ -5,7 +5,7 @@ node_modules/
 dist/
 
 # Test coverage reports
-coverage/                                  # Jest coverage output :contentReference[oaicite:4]{index=4}
+coverage/
 
 # TypeScript cache
 *.tsbuildinfo
