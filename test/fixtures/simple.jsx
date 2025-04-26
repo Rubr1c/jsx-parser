@@ -1,1 +1,3 @@
-<div>A<div>
+<div>
+    A
+<div>
