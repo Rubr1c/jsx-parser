@@ -1,42 +1,75 @@
-import { Token, TokenType } from '../grammer/tokens.js';
+import { Token, TokenType } from '../grammar/tokens.js';
+
+type StateFn = (char: string) => StateFn;
+
+function emit(
+  tokens: Token[],
+  type: TokenType,
+  value: string | null,
+  row: number,
+  colStart: number,
+  colEnd: number
+) {
+  tokens.push({ type, value, row, colStart, colEnd });
+}
+
+function stateData(
+  tokens: Token[],
+  row: number,
+  col: number,
+  buffer: string
+): StateFn {
+  return function (char) {
+    if (char === '<') {
+      if (buffer.length > 0) {
+        emit(tokens, 'JSXText', buffer, row, col - buffer.length, col);
+        buffer = '';
+      }
+      emit(tokens, 'JSXTagStart', '<', row, col, col + 1);
+      return stateTagName(tokens, row, col + 1, '');
+    }
+    buffer += char;
+    return stateData(tokens, row, col + 1, buffer);
+  };
+}
+
+function stateTagName(
+  tokens: Token[],
+  row: number,
+  col: number,
+  buffer: string
+): StateFn {
+  return function (char) {
+    // if whitespace or end tag
+    if (/\s|>/.test(char)) {
+      emit(tokens, 'JSXIdentifier', buffer, row, col - buffer.length, col);
+      if (char === '>') {
+        emit(tokens, 'JSXTagEnd', '>', row, col, col + 1);
+        return stateData(tokens, row, col + 1, '');
+      }
+      return stateData(tokens, row, col + 1, '');
+    }
+    buffer += char;
+    return stateTagName(tokens, row, col + 1, buffer);
+  };
+}
 
 export class Tokenizer {
-  createToken(
-    type: TokenType,
-    value: string | null,
-    row: number,
-    start: number,
-    end: number
-  ): Token {
-    return { type, value, row, start, end };
-  }
-
   tokenize(input: string): Token[] {
     const tokens: Token[] = [];
-    let row: number = 0;
-    let col: number = 0;
+    let row = 0,
+      col = 0;
+    let state: StateFn = stateData(tokens, row, col, '');
     for (const char of input) {
-      let token: Token = this.createToken(
-        TokenType.EOF,
-        null,
-        row,
-        col,
-        col + 1
-      );
-      switch (char) {
-        case '<':
-          token.type = TokenType.JSXTagStart;
-          tokens.push(token);
-          break;
-        case '>':
-          token.type = TokenType.JSXTagEnd;
-          tokens.push(token)
-        case '\n':
-          row++;
-          break;
+      state = state(char);
+      if (char === '\n') {
+        row++;
+        col = 0;
+      } else {
+        col++;
       }
-      col++;
     }
+    emit(tokens, 'EOF', null, row, col, col);
     return tokens;
   }
 }
