@@ -1,3 +1,3 @@
 <div>
-    <Cold figga="tigga"/>
+    <Cold figga={() => {console.log("cold")}}/>
 </div>

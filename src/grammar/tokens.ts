@@ -8,6 +8,7 @@ export type TokenType =
   | 'JSXAttributeKey'
   | 'JSXAttributeEquals'
   | 'JSXAttributeValue'
+  | 'JSXJavaScriptExpression'
   | 'EOF';
 
 export interface Token {

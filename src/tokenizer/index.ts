@@ -330,6 +330,41 @@ function stateAttributeValue(
         buffer += char;
         return collectValue;
       };
+    } else if (char == "{") {
+      let buffer = '';
+      let nestedCount = 0;
+
+      return function collectValue(
+        char: string | null,
+        row: number,
+        col: number
+      ): StateFn {
+        if (char == null) {
+          return stateData(tokens, '', row, col);
+        }
+
+        if (char == "{") {
+          nestedCount++;
+        }
+
+        if (char == "}" && nestedCount == 0) {
+          emit(
+            tokens,
+            "JSXJavaScriptExpression",
+            buffer,
+            startRow,
+            startCol,
+            col + 1
+          );
+
+          return stateInTagContents(tokens, row, col + 1);
+        } else if (char == "}") {
+          nestedCount--;
+        }
+
+        buffer += char
+        return collectValue;
+      }
     }
 
     // If no quote is found, treat as invalid and return to tag contents
