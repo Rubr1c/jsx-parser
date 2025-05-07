@@ -1,3 +1,3 @@
 <div>
-    A
-<div>
+    <Cold />
+</div>

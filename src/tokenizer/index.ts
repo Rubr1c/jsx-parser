@@ -108,12 +108,10 @@ function stateData(
       buffer = '';
 
       if (char === '<') {
-        emit(tokens, 'JSXTagStart', '<', row, col, col + 1);
-        return stateTagName(tokens, '', row, col + 1);
-      } else {
-        // char === null (EOF)
-        return stateData(tokens, '', row, col);
+        return stateTagStart(tokens, row, col + 1);
       }
+      // char === null (EOF)
+      return stateData(tokens, '', row, col);
     }
 
     if (buffer.length === 0) {
@@ -125,6 +123,33 @@ function stateData(
   };
 }
 
+function stateTagStart(
+  tokens: Token[],
+  tagStartRow: number,
+  tagStartCol: number
+): StateFn {
+  return function (char, row, col) {
+    if (char === null) {
+      return stateData(tokens, '', row, col);
+    }
+
+    if (char === '/') {
+      emit(
+        tokens,
+        'JSXClosingTagStart',
+        '</',
+        tagStartRow,
+        tagStartCol - 1,
+        col + 1
+      );
+      return stateTagName(tokens, '', row, col + 1);
+    } else {
+      emit(tokens, 'JSXTagStart', '<', tagStartRow, tagStartCol, col);
+      return stateTagName(tokens, char, row, col);
+    }
+  };
+}
+
 function stateTagName(
   tokens: Token[],
   buffer: string,
@@ -133,7 +158,6 @@ function stateTagName(
 ): StateFn {
   return function (char, row, col) {
     if (char === null) {
-      // EOF inside a tag name - potentially an error case, but emit what we have
       if (buffer.length > 0) {
         emit(
           tokens,
@@ -147,30 +171,36 @@ function stateTagName(
       return stateTagName(tokens, '', row, col);
     }
 
-    // If whitespace or end tag
-    if (/\s|>/.test(char)) {
-      emit(
-        tokens,
-        'JSXIdentifier',
-        buffer,
-        tagNameStartRow,
-        tagNameStartCol,
-        col
-      );
-      buffer = '';
-      if (char === '>') {
+    if (char === '/' || char === '>' || /\s/.test(char)) {
+      if (buffer.length > 0) {
+        emit(
+          tokens,
+          'JSXIdentifier',
+          buffer,
+          tagNameStartRow,
+          tagNameStartCol,
+          col
+        );
+        buffer = '';
+      }
+
+      if (char === '/') {
+        return stateAwaitingSelfCloseEnd(tokens, row, col);
+      } else if (char === '>') {
         emit(tokens, 'JSXTagEnd', '>', row, col, col + 1);
         return stateData(tokens, '', row, col + 1);
+      } else if (/\s/.test(char)) {
+        return stateInTagContents(tokens, row, col + 1);
       }
-      return stateData(tokens, '', row, col + 1); // TODO: Handle attributes
+      return stateData(tokens, char, row, col);
     }
 
-    // Append valid identifier characters
     if (/[a-zA-Z0-9_-]/.test(char)) {
       buffer += char;
       return stateTagName(tokens, buffer, tagNameStartRow, tagNameStartCol);
-    } else {
-      // For now, treat as end of tag name and transition
+    }
+
+    if (buffer.length > 0) {
       emit(
         tokens,
         'JSXIdentifier',
@@ -179,8 +209,55 @@ function stateTagName(
         tagNameStartCol,
         col
       );
-      // What to do with the unexpected char? For now, assume it starts data state.
-      return stateData(tokens, char, row, col); // Pass the char to data state
+    }
+    // Treat the unexpected char as starting data.
+    return stateData(tokens, char, row, col);
+  };
+}
+
+function stateInTagContents(
+  tokens: Token[],
+  _prevCharRow: number,
+  _prevCharCol: number
+): StateFn {
+  return function (char, row, col) {
+    if (char === null) {
+      return stateData(tokens, '', row, col);
+    }
+
+    if (char === '/') {
+      return stateAwaitingSelfCloseEnd(tokens, row, col);
+    } else if (char === '>') {
+      emit(tokens, 'JSXTagEnd', '>', row, col, col + 1);
+      return stateData(tokens, '', row, col + 1);
+    } else if (/\s/.test(char)) {
+      return stateInTagContents(tokens, row, col + 1);
+    } else {
+      // TODO: This is where attribute parsing (e.g., attributeName="value") would begin.
+      return stateData(tokens, char, row, col);
+    }
+  };
+}
+
+function stateAwaitingSelfCloseEnd(
+  tokens: Token[],
+  slashRow: number,
+  slashCol: number
+): StateFn {
+  return function (char, row, col) {
+    if (char === null) {
+      emit(tokens, 'JSXText', '/', slashRow, slashCol, slashCol + 1);
+      return stateData(tokens, '', row, col);
+    }
+
+    if (char === '>') {
+      emit(tokens, 'JSXSelfClosing', '/>', slashRow, slashCol, col + 1);
+      return stateData(tokens, '', row, col + 1);
+    } else if (/\s/.test(char)) {
+      return stateAwaitingSelfCloseEnd(tokens, slashRow, slashCol);
+    } else {
+      emit(tokens, 'JSXText', '/', slashRow, slashCol, slashCol + 1);
+      return stateInTagContents(tokens, row, col);
     }
   };
 }

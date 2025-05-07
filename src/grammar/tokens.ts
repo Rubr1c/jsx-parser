@@ -1,6 +1,8 @@
 export type TokenType =
   | 'JSXTagStart'
   | 'JSXTagEnd'
+  | 'JSXSelfClosing'
+  | 'JSXClosingTagStart'
   | 'JSXIdentifier'
   | 'JSXText'
   | 'EOF';
