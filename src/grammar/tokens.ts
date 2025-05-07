@@ -5,6 +5,9 @@ export type TokenType =
   | 'JSXClosingTagStart'
   | 'JSXIdentifier'
   | 'JSXText'
+  | 'JSXAttributeKey'
+  | 'JSXAttributeEquals'
+  | 'JSXAttributeValue'
   | 'EOF';
 
 export interface Token {

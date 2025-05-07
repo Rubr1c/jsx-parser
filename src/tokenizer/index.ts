@@ -10,7 +10,9 @@ function advancePosition(
 ): { row: number; col: number } {
   let row = startRow;
   let col = startCol;
-  for (const char of text) {
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
     if (char === '\n') {
       row++;
       col = 0;
@@ -18,6 +20,7 @@ function advancePosition(
       col++;
     }
   }
+
   return { row, col };
 }
 
@@ -33,15 +36,17 @@ function calculateTextPositions(
   endRow: number;
   endCol: number;
 } | null {
-  // Don't trim the whitespace to preserve exact text content
-  const text = rawBuffer;
-  if (!text) return null;
+  if (!rawBuffer) return null;
 
-  // Start position is always the beginning of the buffer
+  // If the text is only whitespace (including newlines), return null
+  if (!rawBuffer.replace(/[\s\r\n]/g, '')) return null;
+
+  // Keep the text as is, including whitespace
+  const text = rawBuffer;
   const startRow = bufferStartRow;
   const startCol = bufferStartCol;
 
-  // Calculate where the actual text ends
+  // Calculate where the text ends
   const { row: endRow, col: endCol } = advancePosition(
     startRow,
     startCol,
@@ -238,9 +243,83 @@ function stateInTagContents(
     } else if (/\s/.test(char)) {
       return stateInTagContents(tokens, row, col + 1);
     } else {
-      // TODO: This is where attribute parsing (e.g., attributeName="value") would begin.
-      return stateData(tokens, char, row, col);
+      return stateAttributeName(tokens, char, row, col);
     }
+  };
+}
+
+function stateAttributeName(
+  tokens: Token[],
+  firstChar: string,
+  startRow: number,
+  startCol: number
+): StateFn {
+  let buffer = firstChar;
+
+  return function (char, row, col) {
+    if (char === null) {
+      if (buffer.length > 0) {
+        emit(tokens, 'JSXAttributeKey', buffer, startRow, startCol, col);
+      }
+      return stateData(tokens, '', row, col);
+    }
+
+    if (char === '=' || /\s/.test(char) || char === '/' || char === '>') {
+      if (buffer.length > 0) {
+        emit(tokens, 'JSXAttributeKey', buffer, startRow, startCol, col);
+      }
+
+      if (char === '=') {
+        emit(tokens, 'JSXAttributeEquals', '=', row, col, col + 1);
+        return stateAttributeValue(tokens, row, col + 1);
+      } else if (char === '/') {
+        return stateAwaitingSelfCloseEnd(tokens, row, col);
+      } else if (char === '>') {
+        emit(tokens, 'JSXTagEnd', '>', row, col, col + 1);
+        return stateData(tokens, '', row, col + 1);
+      }
+      return stateInTagContents(tokens, row, col + 1);
+    }
+
+    buffer += char;
+    return stateAttributeName(tokens, buffer, startRow, startCol);
+  };
+}
+
+function stateAttributeValue(
+  tokens: Token[],
+  startRow: number,
+  startCol: number
+): StateFn {
+  return function (char, row, col) {
+    if (char === '"') {
+      let buffer = '';
+      return function collectValue(
+        char: string | null,
+        row: number,
+        col: number
+      ): StateFn {
+        if (char === null) {
+          return stateData(tokens, '', row, col);
+        }
+
+        if (char === '"') {
+          emit(
+            tokens,
+            'JSXAttributeValue',
+            buffer,
+            startRow,
+            startCol,
+            col + 1
+          );
+          return stateInTagContents(tokens, row, col + 1);
+        }
+
+        buffer += char;
+        return collectValue;
+      };
+    }
+    return stateAttributeValue(tokens, startRow, startCol);
   };
 }
 

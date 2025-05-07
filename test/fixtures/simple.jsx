@@ -1,3 +1,3 @@
 <div>
-    <Cold />
+    <Cold figga="tigga"/>
 </div>
