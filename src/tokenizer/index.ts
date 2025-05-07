@@ -292,18 +292,30 @@ function stateAttributeValue(
   startCol: number
 ): StateFn {
   return function (char, row, col) {
-    if (char === '"') {
+    if (char === null) {
+      return stateData(tokens, '', row, col);
+    }
+
+    if (/\s/.test(char)) {
+      return stateAttributeValue(tokens, startRow, startCol);
+    }
+
+    if (char === '"' || char === "'") {
+      const quoteType = char;
       let buffer = '';
+
       return function collectValue(
         char: string | null,
         row: number,
         col: number
       ): StateFn {
         if (char === null) {
+          // Handle unexpected EOF - could emit an error token here
           return stateData(tokens, '', row, col);
         }
 
-        if (char === '"') {
+        if (char === quoteType) {
+          // Found matching quote
           emit(
             tokens,
             'JSXAttributeValue',
@@ -319,7 +331,9 @@ function stateAttributeValue(
         return collectValue;
       };
     }
-    return stateAttributeValue(tokens, startRow, startCol);
+
+    // If no quote is found, treat as invalid and return to tag contents
+    return stateInTagContents(tokens, row, col);
   };
 }
 

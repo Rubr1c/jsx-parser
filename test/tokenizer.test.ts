@@ -229,6 +229,112 @@ const cases: Array<
       { type: 'EOF', value: null, row: 2, colStart: 6, colEnd: 6 },
     ],
   ],
+  // Single quoted attributes
+  [
+    'single quoted attributes',
+    "<input type='text' id='username' />",
+    [
+      { type: 'JSXTagStart', value: '<', row: 0, colStart: 0, colEnd: 1 },
+      { type: 'JSXIdentifier', value: 'input', row: 0, colStart: 1, colEnd: 6 },
+      {
+        type: 'JSXAttributeKey',
+        value: 'type',
+        row: 0,
+        colStart: 7,
+        colEnd: 11,
+      },
+      {
+        type: 'JSXAttributeEquals',
+        value: '=',
+        row: 0,
+        colStart: 11,
+        colEnd: 12,
+      },
+      {
+        type: 'JSXAttributeValue',
+        value: 'text',
+        row: 0,
+        colStart: 12,
+        colEnd: 18,
+      },
+      {
+        type: 'JSXAttributeKey',
+        value: 'id',
+        row: 0,
+        colStart: 19,
+        colEnd: 21,
+      },
+      {
+        type: 'JSXAttributeEquals',
+        value: '=',
+        row: 0,
+        colStart: 21,
+        colEnd: 22,
+      },
+      {
+        type: 'JSXAttributeValue',
+        value: 'username',
+        row: 0,
+        colStart: 22,
+        colEnd: 32,
+      },
+      { type: 'JSXSelfClosing', value: '/>', row: 0, colStart: 33, colEnd: 35 },
+      { type: 'EOF', value: null, row: 0, colStart: 35, colEnd: 35 },
+    ],
+  ],
+  // Mixed quotes in attributes
+  [
+    'mixed quotes in attributes',
+    '<div class="main" data-value=\'{"key": "value"}\' />',
+    [
+      { type: 'JSXTagStart', value: '<', row: 0, colStart: 0, colEnd: 1 },
+      { type: 'JSXIdentifier', value: 'div', row: 0, colStart: 1, colEnd: 4 },
+      {
+        type: 'JSXAttributeKey',
+        value: 'class',
+        row: 0,
+        colStart: 5,
+        colEnd: 10,
+      },
+      {
+        type: 'JSXAttributeEquals',
+        value: '=',
+        row: 0,
+        colStart: 10,
+        colEnd: 11,
+      },
+      {
+        type: 'JSXAttributeValue',
+        value: 'main',
+        row: 0,
+        colStart: 11,
+        colEnd: 17,
+      },
+      {
+        type: 'JSXAttributeKey',
+        value: 'data-value',
+        row: 0,
+        colStart: 18,
+        colEnd: 28,
+      },
+      {
+        type: 'JSXAttributeEquals',
+        value: '=',
+        row: 0,
+        colStart: 28,
+        colEnd: 29,
+      },
+      {
+        type: 'JSXAttributeValue',
+        value: '{"key": "value"}',
+        row: 0,
+        colStart: 29,
+        colEnd: 47,
+      },
+      { type: 'JSXSelfClosing', value: '/>', row: 0, colStart: 48, colEnd: 50 },
+      { type: 'EOF', value: null, row: 0, colStart: 50, colEnd: 50 },
+    ],
+  ],
 ];
 
 describe('Tokenizer.tokenize', () => {
