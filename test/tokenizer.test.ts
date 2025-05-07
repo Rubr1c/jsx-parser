@@ -14,8 +14,9 @@ const cases: Array<
     }>
   ]
 > = [
+  // Basic opening tag
   [
-    'simple <div> tag',
+    'simple opening tag',
     '<div>',
     [
       { type: 'JSXTagStart', value: '<', row: 0, colStart: 0, colEnd: 1 },
@@ -24,20 +25,97 @@ const cases: Array<
       { type: 'EOF', value: null, row: 0, colStart: 5, colEnd: 5 },
     ],
   ],
+  // Basic closing tag
   [
-    'text before tag',
-    'A<div>',
+    'simple closing tag',
+    '</div>',
     [
-      { type: 'JSXText', value: 'A', row: 0, colStart: 0, colEnd: 1 },
-      { type: 'JSXTagStart', value: '<', row: 0, colStart: 1, colEnd: 2 },
+      {
+        type: 'JSXClosingTagStart',
+        value: '</',
+        row: 0,
+        colStart: 0,
+        colEnd: 2,
+      },
       { type: 'JSXIdentifier', value: 'div', row: 0, colStart: 2, colEnd: 5 },
       { type: 'JSXTagEnd', value: '>', row: 0, colStart: 5, colEnd: 6 },
       { type: 'EOF', value: null, row: 0, colStart: 6, colEnd: 6 },
     ],
   ],
+  // Self-closing tag without space
+  [
+    'self-closing tag without space',
+    '<div/>',
+    [
+      { type: 'JSXTagStart', value: '<', row: 0, colStart: 0, colEnd: 1 },
+      { type: 'JSXIdentifier', value: 'div', row: 0, colStart: 1, colEnd: 4 },
+      { type: 'JSXSelfClosing', value: '/>', row: 0, colStart: 4, colEnd: 6 },
+      { type: 'EOF', value: null, row: 0, colStart: 6, colEnd: 6 },
+    ],
+  ],
+  // Self-closing tag with space
+  [
+    'self-closing tag with space',
+    '<div />',
+    [
+      { type: 'JSXTagStart', value: '<', row: 0, colStart: 0, colEnd: 1 },
+      { type: 'JSXIdentifier', value: 'div', row: 0, colStart: 1, colEnd: 4 },
+      { type: 'JSXSelfClosing', value: '/>', row: 0, colStart: 5, colEnd: 7 },
+      { type: 'EOF', value: null, row: 0, colStart: 7, colEnd: 7 },
+    ],
+  ],
+  // Text content
+  [
+    'text content',
+    'Hello <div>World</div>',
+    [
+      { type: 'JSXText', value: 'Hello ', row: 0, colStart: 0, colEnd: 6 },
+      { type: 'JSXTagStart', value: '<', row: 0, colStart: 6, colEnd: 7 },
+      { type: 'JSXIdentifier', value: 'div', row: 0, colStart: 7, colEnd: 10 },
+      { type: 'JSXTagEnd', value: '>', row: 0, colStart: 10, colEnd: 11 },
+      { type: 'JSXText', value: 'World', row: 0, colStart: 11, colEnd: 16 },
+      {
+        type: 'JSXClosingTagStart',
+        value: '</',
+        row: 0,
+        colStart: 16,
+        colEnd: 18,
+      },
+      { type: 'JSXIdentifier', value: 'div', row: 0, colStart: 18, colEnd: 21 },
+      { type: 'JSXTagEnd', value: '>', row: 0, colStart: 21, colEnd: 22 },
+      { type: 'EOF', value: null, row: 0, colStart: 22, colEnd: 22 },
+    ],
+  ],
+  // Multiple lines
+  [
+    'multiple lines',
+    '<div>\n  Hello\n</div>',
+    [
+      { type: 'JSXTagStart', value: '<', row: 0, colStart: 0, colEnd: 1 },
+      { type: 'JSXIdentifier', value: 'div', row: 0, colStart: 1, colEnd: 4 },
+      { type: 'JSXTagEnd', value: '>', row: 0, colStart: 4, colEnd: 5 },
+      {
+        type: 'JSXText',
+        value: '\n  Hello\n',
+        row: 0,
+        colStart: 5,
+        colEnd: 6,
+      },
+      {
+        type: 'JSXClosingTagStart',
+        value: '</',
+        row: 2,
+        colStart: 0,
+        colEnd: 2,
+      },
+      { type: 'JSXIdentifier', value: 'div', row: 2, colStart: 2, colEnd: 5 },
+      { type: 'JSXTagEnd', value: '>', row: 2, colStart: 5, colEnd: 6 },
+      { type: 'EOF', value: null, row: 2, colStart: 6, colEnd: 6 },
+    ],
+  ],
 ];
 
-describe('Tokenizer.tokenize inline FSM cases', () => {
+describe('Tokenizer.tokenize', () => {
   test.each(cases)('%s', (_desc, input, expected) => {
     const tokens = createTokenizer().tokenize(input);
     expect(tokens).toEqual(expected);

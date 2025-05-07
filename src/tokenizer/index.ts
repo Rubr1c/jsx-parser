@@ -33,26 +33,22 @@ function calculateTextPositions(
   endRow: number;
   endCol: number;
 } | null {
-  const trimmedText = rawBuffer.trim();
-  if (!trimmedText) return null;
+  // Don't trim the whitespace to preserve exact text content
+  const text = rawBuffer;
+  if (!text) return null;
 
-  const leadingWhitespace = rawBuffer.match(/^\s*/)?.[0] ?? '';
-
-  // Calculate where the actual text starts
-  const { row: startRow, col: startCol } = advancePosition(
-    bufferStartRow,
-    bufferStartCol,
-    leadingWhitespace
-  );
+  // Start position is always the beginning of the buffer
+  const startRow = bufferStartRow;
+  const startCol = bufferStartCol;
 
   // Calculate where the actual text ends
   const { row: endRow, col: endCol } = advancePosition(
     startRow,
     startCol,
-    trimmedText
+    text
   );
 
-  return { text: trimmedText, startRow, startCol, endRow, endCol };
+  return { text, startRow, startCol, endRow, endCol };
 }
 
 function emit(
@@ -88,22 +84,24 @@ function stateData(
     // Handle '<' or EOF to potentially emit pending text
     if (char === null || char === '<') {
       // Calculate positions of the trimmed text within the buffer
-      const textInfo = calculateTextPositions(
-        buffer,
-        bufferStartRow,
-        bufferStartCol
-      );
-
-      if (textInfo) {
-        // Emit JSXText using the calculated positions
-        emit(
-          tokens,
-          'JSXText',
-          textInfo.text,
-          textInfo.startRow,
-          textInfo.startCol,
-          textInfo.endCol
+      if (buffer.length > 0) {
+        const textInfo = calculateTextPositions(
+          buffer,
+          bufferStartRow,
+          bufferStartCol
         );
+
+        if (textInfo) {
+          // Emit JSXText using the calculated positions
+          emit(
+            tokens,
+            'JSXText',
+            textInfo.text,
+            textInfo.startRow,
+            textInfo.startCol,
+            textInfo.endCol
+          );
+        }
       }
       buffer = '';
 
@@ -144,7 +142,14 @@ function stateTagStart(
       );
       return stateTagName(tokens, '', row, col + 1);
     } else {
-      emit(tokens, 'JSXTagStart', '<', tagStartRow, tagStartCol, col);
+      emit(
+        tokens,
+        'JSXTagStart',
+        '<',
+        tagStartRow,
+        tagStartCol - 1,
+        tagStartCol
+      );
       return stateTagName(tokens, char, row, col);
     }
   };
